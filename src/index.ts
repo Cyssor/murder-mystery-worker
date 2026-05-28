@@ -789,7 +789,9 @@ function bind() {
 }
 
 loadScripts();
-setInterval(refresh, 5000);
+setInterval(() => {
+  if (document.visibilityState === "visible") refresh();
+}, 15000);
 `;
 
 const STYLES = `
