@@ -19,10 +19,6 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["GameRoom"]
-    },
-    {
-      "tag": "v2",
       "new_sqlite_classes": ["GameRoomV2"]
     }
   ]
