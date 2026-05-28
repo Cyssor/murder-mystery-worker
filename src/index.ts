@@ -41,7 +41,7 @@ interface RoomState {
 }
 
 interface Env {
-  ROOMS: DurableObjectNamespace<GameRoom>;
+  ROOMS: DurableObjectNamespace<GameRoomV2>;
 }
 
 const PHASES = [
@@ -197,7 +197,7 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
-export class GameRoom extends DurableObject<Env> {
+export class GameRoomV2 extends DurableObject<Env> {
   async create(code: string, scriptId: ScriptId, nickname: string) {
     const existing = await this.ctx.storage.get<RoomState>("state");
     if (existing) return this.snapshot(existing, existing.players[0]?.id);
@@ -400,6 +400,8 @@ export class GameRoom extends DurableObject<Env> {
     };
   }
 }
+
+export class GameRoom extends GameRoomV2 {}
 
 function publicRole(script: ScriptPack, roleId: string) {
   const roleItem = script.roles.find((candidate) => candidate.id === roleId);
