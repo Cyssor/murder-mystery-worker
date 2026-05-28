@@ -198,11 +198,11 @@ function shuffle<T>(items: T[]) {
 }
 
 export class GameRoom extends DurableObject<Env> {
-  async create(scriptId: ScriptId, nickname: string) {
+  async create(code: string, scriptId: ScriptId, nickname: string) {
     const existing = await this.ctx.storage.get<RoomState>("state");
     if (existing) return this.snapshot(existing, existing.players[0]?.id);
     const state: RoomState = {
-      code: roomCode(),
+      code,
       scriptId,
       createdAt: Date.now(),
       phaseIndex: 0,
@@ -449,7 +449,7 @@ async function handleApi(request: Request, env: Env, url: URL) {
       const scriptId = normalizeScriptId(body.scriptId);
       const code = roomCode();
       const stub = getRoomStub(env, code);
-      return json(await stub.create(scriptId, nickname));
+      return json(await stub.create(code, scriptId, nickname));
     }
 
     if (parts[0] === "api" && parts[1] === "rooms" && parts[2]) {
