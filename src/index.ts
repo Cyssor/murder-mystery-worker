@@ -474,6 +474,7 @@ function simpleScript(input: {
     playerCounts: input.playerCounts,
     roles: input.roles.map(([id, name, publicIdentity, secret]) => role(id, name, publicIdentity, "适合朋友桌游局，按阶段阅读自己的私密信息。", {
       role: secret,
+      intro: `自我介绍参考：我是${name}，${publicIdentity}。你可以说明自己为什么来到现场、和死者或事件有什么公开关系。不要主动说出自己的隐藏秘密。`,
       act2: `${secret} 中段重点：围绕时间线、动机和是否撒谎进行自辩，不能编造主持人未公布的新事实。`,
       reveal: secret
     })),
@@ -705,7 +706,7 @@ export class GameRoomV2 extends DurableObject<Env> {
       name: myRole.name,
       publicIdentity: myRole.publicIdentity,
       fit: myRole.fit,
-      privateText: myRole.privateByPhase[phase.id] ?? ""
+      privateText: privateTextForPhase(myRole, phase.id)
     } : null;
     const voteCounts = Object.values(state.votes).reduce<Record<string, number>>((acc, roleId) => {
       acc[roleId] = (acc[roleId] ?? 0) + 1;
@@ -764,6 +765,14 @@ function publicRole(script: ScriptPack, roleId: string) {
     name: roleItem.name,
     publicIdentity: roleItem.publicIdentity
   } : null;
+}
+
+function privateTextForPhase(roleItem: Role, phaseId: string) {
+  if (roleItem.privateByPhase[phaseId]) return roleItem.privateByPhase[phaseId];
+  if (phaseId === "intro") {
+    return `自我介绍参考：我是${roleItem.name}，${roleItem.publicIdentity}。请只介绍公开身份、来到现场的理由、案发前自己的公开状态。隐藏秘密先不要说。`;
+  }
+  return "";
 }
 
 async function parseJson<T extends Record<string, unknown>>(request: Request): Promise<T> {
