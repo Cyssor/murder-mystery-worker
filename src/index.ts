@@ -473,7 +473,7 @@ function simpleScript(input: {
     playerCount: input.playerCount,
     playerCounts: input.playerCounts,
     roles: input.roles.map(([id, name, publicIdentity, secret]) => role(id, name, publicIdentity, "适合朋友桌游局，按阶段阅读自己的私密信息。", {
-      role: secret,
+      role: roleCard(input.title, name, publicIdentity, secret),
       intro: `自我介绍参考：我是${name}，${publicIdentity}。你可以说明自己为什么来到现场、和死者或事件有什么公开关系。不要主动说出自己的隐藏秘密。`,
       act2: `${secret} 中段重点：围绕时间线、动机和是否撒谎进行自辩，不能编造主持人未公布的新事实。`,
       reveal: secret
@@ -482,6 +482,15 @@ function simpleScript(input: {
     publicClues: input.publicClues,
     reveal: input.reveal
   };
+}
+
+function roleCard(title: string, name: string, publicIdentity: string, secret: string) {
+  return [
+    `【开场可照读】我是${name}，${publicIdentity}。今晚我出现在《${title}》这场事件里，不是来看热闹的。死者出事前，我确实和这件事有关系，但我希望各位先听事实，不要只凭身份和动机判断我。`,
+    `【你知道的事】${secret}`,
+    "【这一阶段你的目标】先把自己的公开身份讲清楚，承认那些迟早会被发现的公开关系；对真正敏感的隐藏秘密，可以先保留，等别人追问或线索出现后再解释。",
+    "【不要主动暴露】不要直接说出自己的隐藏秘密、关键物证来源、真实动机或案发关键时间点。你可以质疑别人，但不能编造主持人没有公布的新事实。"
+  ].join("<br><br>");
 }
 
 function json(data: unknown, init: ResponseInit = {}) {
