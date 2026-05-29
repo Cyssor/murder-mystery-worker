@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 
-type ScriptId = "rainy-manor" | "snow-sanatorium" | "seventh-letter";
+type ScriptId = string;
 
 interface Role {
   id: string;
@@ -15,7 +15,9 @@ interface ScriptPack {
   title: string;
   type: string;
   duration: string;
+  difficulty: string;
   playerCount: number;
+  playerCounts?: number[];
   roles: Role[];
   locations: { id: string; name: string; clue: string }[];
   publicClues: string[];
@@ -35,6 +37,7 @@ interface Player {
 interface RoomState {
   code: string;
   scriptId: ScriptId;
+  playerCount?: number;
   createdAt: number;
   phaseIndex: number;
   speakingIndex: number;
@@ -67,6 +70,7 @@ const SCRIPTS: Record<ScriptId, ScriptPack> = {
     title: "雨夜庄园",
     type: "本格推理 / 家族恩怨 / 身份反转 / 遗嘱争夺",
     duration: "3.5-5 小时",
+    difficulty: "★★★☆☆",
     playerCount: 7,
     roles: [
       role("a1", "林子轩", "林家长子", "适合敢发言、能扛嫌疑的玩家", {
@@ -126,6 +130,7 @@ const SCRIPTS: Record<ScriptId, ScriptPack> = {
     title: "雪夜疗养院",
     type: "本格推理 / 医疗秘密 / 旧案复仇 / 伪装身份",
     duration: "4-5 小时",
+    difficulty: "★★★★☆",
     playerCount: 7,
     roles: [
       role("b1", "沈墨", "院长之子", "适合主动发言、利益动机明显的玩家", {
@@ -185,6 +190,7 @@ const SCRIPTS: Record<ScriptId, ScriptPack> = {
     title: "海上第七封信",
     type: "游轮密室 / 遗产争夺 / 失踪旧案 / 双重身份",
     duration: "4-5.5 小时",
+    difficulty: "★★★★☆",
     playerCount: 7,
     roles: [
       role("c1", "秦越", "死者养子", "适合承压能力强、能处理继承线的玩家", {
@@ -239,6 +245,192 @@ const SCRIPTS: Record<ScriptId, ScriptPack> = {
     ],
     reveal: "真凶是乔安。所谓广播遗言是预设录音，不是秦柏川临死前实时发声。真正死亡时间在10:40左右。乔安10:35借送乐谱进入书房，用拆信刀杀死秦柏川，随后用细线制造伪密室，设置11:00录音，并拿走第七封信隐藏自己是十五年前女作家妹妹的身份。"
   }
+  ,
+  "fog-inn": simpleScript({
+    id: "fog-inn",
+    title: "雾中民宿",
+    type: "民宿封闭空间 / 旧案复仇 / 伪装自杀",
+    duration: "2.5-3.5 小时",
+    difficulty: "★★★☆☆",
+    playerCount: 5,
+    playerCounts: [4, 5, 6],
+    roles: [
+      ["d1", "周棠", "自由摄影师 / 真凶", "周眠妹妹，复仇者。她模仿赵屿的户外绳结伪装自杀。"],
+      ["d2", "许知微", "民宿老板", "想保护民宿声誉，曾参与隐瞒十年前事故。"],
+      ["d3", "林砚", "旅行作家", "为新书调查民宿旧案；4人局承接赵屿的绳结嫌疑。"],
+      ["d4", "孟晚", "心理咨询师", "曾治疗旧案幸存者，知道十年前事故创伤。"],
+      ["d5", "赵屿", "户外教练", "会打绳结，被真凶嫁祸的强红鲱鱼。"],
+      ["d6", "沈弋", "实习店员", "负责前台与监控，发现硬盘被动过但怕追责隐瞒。"]
+    ],
+    locations: [
+      ["attic", "阁楼", "死者颈部勒痕偏低，椅子无承重压痕，像死后摆放。"],
+      ["tool-room", "工具间", "少了一段登山绳，绳结像户外结但收尾方向错误。"],
+      ["camera-bag", "摄影包", "肩带金属刮痕与死者指甲缝中的黑色纤维吻合。"],
+      ["archive", "旧案资料", "十年前周眠坠亡案被写成意外，旧地块明天将被转让。"]
+    ],
+    publicClues: [
+      "蒋衡手提包里有旧地块转让合同，签约日期就是明天。",
+      "十年前事故剪报：女孩周眠在民宿后山坠亡，记录被写成意外。",
+      "阁楼梁上的绳结像户外结，但收尾方向错误，像是模仿。",
+      "周棠相机里有赵屿绳结照片特写，拍摄时间在案发前。",
+      "周棠钱包夹层有周眠小时候合照，背面写着“姐姐”。"
+    ],
+    reveal: "真凶是周棠。蒋衡真正死于21:10左右的勒杀。周棠利用赵屿社交账号学来的绳结伪装成户外绳结，又用备用手机在21:14播放脚步声，制造死者仍活动的假象。"
+  }),
+  "last-metro": simpleScript({
+    id: "last-metro",
+    title: "最后一班地铁",
+    type: "地铁末班车 / 过敏杀人 / 监控断点 / 快节奏推理",
+    duration: "2-3 小时",
+    difficulty: "★★★☆☆",
+    playerCount: 4,
+    playerCounts: [4, 5],
+    roles: [
+      ["e1", "纪然", "前私人助理 / 真凶", "姐姐因韩启明职场霸凌自杀，知道他的咖啡习惯和坚果过敏。"],
+      ["e2", "白洛", "广告公司前员工", "作品被韩启明抢走并开除，旧怨很深。"],
+      ["e3", "陈司", "地铁司机", "曾因韩启明投诉被处分，被监控黑屏拖入嫌疑。"],
+      ["e4", "许曼", "急救医生", "曾被韩启明撤资导致项目失败，能判断过敏死因。"],
+      ["e5", "顾南", "地铁安检员", "证明案发前有人翻过死者背包，但因私自离岗前期隐瞒。"]
+    ],
+    locations: [
+      ["carriage", "末班车厢", "韩启明喉头水肿，符合严重过敏性休克。"],
+      ["bag", "死者背包", "背包夹层空了，原本应放肾上腺素笔。"],
+      ["coffee", "咖啡杯", "杯口有微量坚果油残留。"],
+      ["platform", "站台监控", "纪然曾接过韩启明咖啡杯约4秒。"]
+    ],
+    publicClues: [
+      "韩启明手机里有给白洛的威胁短信。",
+      "车厢监控黑屏22秒，但黑屏前韩启明已经开始抓喉咙。",
+      "咖啡杯口有微量坚果油残留。",
+      "垃圾桶中发现被折断的肾上腺素笔外壳。",
+      "纪然手机搜索记录：“坚果油接触过敏多久发作”。"
+    ],
+    reveal: "真凶是纪然。真正作案点不在监控黑屏期间，而是在23:24站台短暂接过咖啡杯时。她将坚果油涂在杯口，并提前偷走急救针，利用黑屏制造死亡时间误导。"
+  }),
+  "silent-auction": simpleScript({
+    id: "silent-auction",
+    title: "无声拍卖会",
+    type: "拍卖会 / 古董赝品 / 熄灯杀人 / 家族旧物",
+    duration: "3-4 小时",
+    difficulty: "★★★★☆",
+    playerCount: 6,
+    playerCounts: [5, 6],
+    roles: [
+      ["f1", "何砚", "古董修复师 / 真凶", "何家后人，本想追回祖传玉印。"],
+      ["f2", "顾行舟", "收藏家", "想低价收购玉印，收到匿名短信称玉印不真。"],
+      ["f3", "方白", "古董鉴定师", "帮陆承安出过假鉴定。"],
+      ["f4", "陆宁", "死者女儿", "想阻止父亲再婚和转移财产，制造过熄灯。"],
+      ["f5", "秦越", "陆家旧保姆之子", "认为母亲被陆承安害死。"],
+      ["f6", "苏明岚", "调查记者", "调查陆承安倒卖文物；5人局可删除并入顾行舟。"]
+    ],
+    locations: [
+      ["display", "展柜", "玻璃没有外部暴力破坏痕迹，玉印可能是熄灯中被拿走。"],
+      ["switch", "电闸", "电闸旁有陆宁高跟鞋鞋印，说明熄灯由她制造。"],
+      ["paper-bin", "碎纸篓", "买家信息残片上有“海港仓”字样。"],
+      ["workbox", "修复箱", "镇纸上有修复用松香粉，何砚工作箱中也有同类粉末。"]
+    ],
+    publicClues: [
+      "玉印印面边缘有新刻痕，像近期做旧。",
+      "方白鉴定报告中“传世包浆”用词与实物不符。",
+      "电闸旁有陆宁高跟鞋鞋印。",
+      "何家旧谱记载：真玉印底部有“砚”字暗记，而展柜玉印没有。",
+      "陆承安死前攥着一小片修复手套碎片。"
+    ],
+    reveal: "真凶是何砚。她发现展柜玉印是赝品后逼问陆承安，陆承安承认真品早已被私卖并撕毁唯一买家线索。何砚失控用镇纸杀人，再拿走赝品制造盗窃杀人表象。"
+  }),
+  "birthday-live": simpleScript({
+    id: "birthday-live",
+    title: "生日直播间",
+    type: "直播事故 / 录播延迟 / 食物过敏 / 网络舆论",
+    duration: "2.5-3.5 小时",
+    difficulty: "★★★☆☆",
+    playerCount: 5,
+    playerCounts: [4, 5, 6],
+    roles: [
+      ["g1", "夏予", "化妆师 / 真凶", "被唐梨长期压榨，背过抄袭黑锅，掌握过敏禁忌。"],
+      ["g2", "沈乔", "品牌方代表", "害怕唐梨毁约造成巨额损失。"],
+      ["g3", "路星野", "前男友", "被唐梨营销分手人设。"],
+      ["g4", "姜禾", "闺蜜兼合伙人", "知道唐梨黑料，股权分成将被削弱；4人局承接直播后台信息。"],
+      ["g5", "白榆", "直播导演", "操控直播延迟和切片，是时间误导红鲱鱼。"],
+      ["g6", "阿景", "运营助理", "负责切换直播画面，知道10分钟延迟但因偷懒隐瞒。"]
+    ],
+    locations: [
+      ["makeup-room", "化妆间", "唐梨倒在镜前，嘴唇红肿，符合严重过敏。"],
+      ["lip-gloss", "唇釉", "刷头检出芒果提取物残留。"],
+      ["live-console", "直播后台", "21:00画面为延迟垫片，不是实时画面。"],
+      ["contract", "商务合同", "唐梨拒绝口播将导致品牌方巨额损失。"]
+    ],
+    publicClues: [
+      "唐梨准备发声明，把早年抄袭争议全部推给夏予。",
+      "法医初步判断死因为严重过敏性休克。",
+      "唐梨禁忌表写明：严重芒果过敏，禁止接触芒果提取物。",
+      "蛋糕和饮料均未检出芒果成分。",
+      "夏予化妆箱中有一支拆封芒果精华小样。"
+    ],
+    reveal: "真凶是夏予。唐梨真正死亡在21:08前后，21:00直播画面是延迟垫片。夏予利用补妆机会把芒果精华混入唇釉，能同时解释死因、过敏源和死亡时间误导。"
+  }),
+  "misty-manor": simpleScript({
+    id: "misty-manor",
+    title: "迷雾庄园命案",
+    type: "豪门遗产纠纷 / 伪密室 / 情人共犯",
+    duration: "70-100 分钟",
+    difficulty: "★★★☆☆",
+    playerCount: 5,
+    playerCounts: [4, 5, 6],
+    roles: [
+      ["h1", "维克多", "老庄主长子", "欠下赌债，急需遗产，伪造过旧遗嘱草稿。"],
+      ["h2", "伊莎贝拉", "老庄主二女儿", "曾被父亲拆散恋情，偷藏过父亲信件。"],
+      ["h3", "莉莉安", "年轻遗孀 / 真凶", "与管家有私情，计划偷遗嘱，最终杀死亨利。"],
+      ["h4", "阿尔弗雷德", "老管家 / 包庇者", "挪用资金被发现，与莉莉安相爱，案后帮她伪造密室。"],
+      ["h5", "霍华德", "生意老友", "与死者有分成纠纷，掌握遗嘱将调整的消息。"],
+      ["h6", "塞巴斯蒂安", "私生子", "手里有死者承认身份的信，推动遗嘱线。"]
+    ],
+    locations: [
+      ["study", "书房", "死者胸口插着拆信刀，书房门窗看似从内部反锁。"],
+      ["fireplace", "壁炉", "有一份烧毁一半的遗嘱文件。"],
+      ["drawer", "管家抽屉", "发现一段弯曲细铁丝，可用于伪造反锁。"],
+      ["wine", "红酒杯", "红酒中含安眠药，剂量不足以致死。"]
+    ],
+    publicClues: [
+      "死者右手紧握一枚女士胸针，胸针有被强行扯断的痕迹。",
+      "内侧门栓有划痕，像是从门外用细线或铁丝操作过。",
+      "阿尔弗雷德袖口有壁炉灰，尽管他否认接近壁炉。",
+      "莉莉安与阿尔弗雷德的信件写着：“过了今晚，我们就自由了。”",
+      "死因是胸口刺伤，安眠药只是让死者短暂眩晕。"
+    ],
+    reveal: "真凶是莉莉安，阿尔弗雷德是包庇者。莉莉安先用安眠药让亨利眩晕，偷遗嘱时被发现后用拆信刀杀人；阿尔弗雷德帮助烧毁遗嘱、擦拭现场，并用细铁丝伪造密室。"
+  }),
+  "storm-train": simpleScript({
+    id: "storm-train",
+    title: "暴雨列车的午夜",
+    type: "列车谋杀 / 旧案复仇 / 身份隐藏 / 伪密室",
+    duration: "80-110 分钟",
+    difficulty: "★★★★☆",
+    playerCount: 5,
+    playerCounts: [4, 5, 6],
+    roles: [
+      ["i1", "林小禾", "年轻记者", "调查八年前溺亡案，掌握王启明涉案录音线索。"],
+      ["i2", "苏晚", "神秘女子", "八年前溺亡案死者的女儿，确实进过7号包厢。"],
+      ["i3", "老周", "退休警察", "当年收钱把旧案定性为意外，是旧案知情者。"],
+      ["i5", "小美", "列车员 / 真凶", "姐姐因王富商旧案被害，利用乘务员权限作案。"],
+      ["i4", "阿杰", "富商秘书", "偷取公司文件被发现，掌握洗钱/事故证据。"],
+      ["i6", "大刘", "列车厨师", "看见小美借走餐夹但不敢说。"]
+    ],
+    locations: [
+      ["cabin7", "7号包厢", "门挂着安全链，表面像密室。"],
+      ["necklace", "珍珠项链", "项链断裂后被缠在死者脖子上，但不是真正凶器。"],
+      ["berth", "卧铺安全束带", "真正凶器是卧铺安全束带。"],
+      ["service-card", "乘务员备用卡", "小美能用备用卡进入包厢。"]
+    ],
+    publicClues: [
+      "23:20苏晚进入7号包厢质问旧案，与死者拉扯后离开；死者当时仍活着。",
+      "23:30老周看到小美进入7号包厢，但因旧案愧疚没有声张。",
+      "死者脖子上的珍珠项链并非真正凶器。",
+      "安全链可用餐夹从门外拨上，伪造密室。",
+      "小美23:55假装巡逻发现尸体。"
+    ],
+    reveal: "真凶是列车员小美。她23:35用乘务员备用卡进入7号包厢，以安全检查为由接近王启明，用卧铺安全束带勒死他，再用断裂珍珠项链嫁祸苏晚，并用餐夹从门外拨上安全链。"
+  })
 };
 
 function role(id: string, name: string, publicIdentity: string, fit: string, privateByPhase?: Record<string, string>): Role {
@@ -257,6 +449,38 @@ function role(id: string, name: string, publicIdentity: string, fit: string, pri
 
 function clue(id: string, name: string, clueText: string) {
   return { id, name, clue: clueText };
+}
+
+function simpleScript(input: {
+  id: ScriptId;
+  title: string;
+  type: string;
+  duration: string;
+  difficulty: string;
+  playerCount: number;
+  playerCounts?: number[];
+  roles: [string, string, string, string][];
+  locations: [string, string, string][];
+  publicClues: string[];
+  reveal: string;
+}): ScriptPack {
+  return {
+    id: input.id,
+    title: input.title,
+    type: input.type,
+    duration: input.duration,
+    difficulty: input.difficulty,
+    playerCount: input.playerCount,
+    playerCounts: input.playerCounts,
+    roles: input.roles.map(([id, name, publicIdentity, secret]) => role(id, name, publicIdentity, "适合朋友桌游局，按阶段阅读自己的私密信息。", {
+      role: secret,
+      act2: `${secret} 中段重点：围绕时间线、动机和是否撒谎进行自辩，不能编造主持人未公布的新事实。`,
+      reveal: secret
+    })),
+    locations: input.locations.map(([id, name, clueText]) => clue(id, name, clueText)),
+    publicClues: input.publicClues,
+    reveal: input.reveal
+  };
 }
 
 function json(data: unknown, init: ResponseInit = {}) {
@@ -307,12 +531,15 @@ function shuffle<T>(items: T[]) {
 }
 
 export class GameRoomV2 extends DurableObject<Env> {
-  async create(code: string, scriptId: ScriptId, nickname: string) {
+  async create(code: string, scriptId: ScriptId, nickname: string, playerCount?: number) {
     const existing = await this.ctx.storage.get<RoomState>("state");
     if (existing) return this.snapshot(existing, existing.players[0]?.id);
+    const script = SCRIPTS[scriptId];
+    const count = normalizePlayerCount(script, playerCount);
     const state: RoomState = {
       code,
       scriptId,
+      playerCount: count,
       createdAt: Date.now(),
       phaseIndex: 0,
       speakingIndex: 0,
@@ -341,8 +568,8 @@ export class GameRoomV2 extends DurableObject<Env> {
       return this.snapshot(state, returning.id);
     }
     if (state.assignmentLocked) throw new Error("房间已经开始，不能再加入新玩家。");
-    const script = SCRIPTS[state.scriptId];
-    if (state.players.length >= script.playerCount) throw new Error("房间已满。");
+    const count = this.roomPlayerCount(state);
+    if (state.players.length >= count) throw new Error("房间已满。");
     const player: Player = {
       id: randomToken(12),
       nickname,
@@ -352,7 +579,7 @@ export class GameRoomV2 extends DurableObject<Env> {
       readyPhase: null
     };
     state.players.push(player);
-    if (state.players.length === script.playerCount) this.assignRoles(state);
+    if (state.players.length === count) this.assignRoles(state);
     await this.save(state);
     return this.snapshot(state, player.id);
   }
@@ -360,8 +587,8 @@ export class GameRoomV2 extends DurableObject<Env> {
   async start(playerId: string) {
     const state = await this.requireState();
     this.requireOwner(state, playerId);
-    const script = SCRIPTS[state.scriptId];
-    if (state.players.length !== script.playerCount) throw new Error(`需要 ${script.playerCount} 名玩家到齐后才能开始。`);
+    const count = this.roomPlayerCount(state);
+    if (state.players.length !== count) throw new Error(`需要 ${count} 名玩家到齐后才能开始。`);
     this.assignRoles(state);
     state.phaseIndex = Math.max(state.phaseIndex, 1);
     await this.save(state);
@@ -383,8 +610,8 @@ export class GameRoomV2 extends DurableObject<Env> {
     const state = await this.requireState();
     const player = this.requirePlayer(state, playerId);
     player.readyPhase = state.phaseIndex;
-    const script = SCRIPTS[state.scriptId];
-    if (state.players.length === script.playerCount && state.players.every((candidate) => candidate.readyPhase === state.phaseIndex)) {
+    const count = this.roomPlayerCount(state);
+    if (state.players.length === count && state.players.every((candidate) => candidate.readyPhase === state.phaseIndex)) {
       state.phaseIndex = Math.min(PHASES.length - 1, state.phaseIndex + 1);
       state.speakingIndex = 0;
       state.players = state.players.map((candidate) => ({ ...candidate, readyPhase: null }));
@@ -419,8 +646,7 @@ export class GameRoomV2 extends DurableObject<Env> {
     const state = await this.requireState();
     this.requirePlayer(state, playerId);
     if (PHASES[state.phaseIndex]?.id !== "vote") throw new Error("当前不是投票阶段。");
-    const script = SCRIPTS[state.scriptId];
-    if (!script.roles.some((roleItem) => roleItem.id === targetRoleId)) throw new Error("未知投票对象。");
+    if (!this.scriptRoles(state).some((roleItem) => roleItem.id === targetRoleId)) throw new Error("未知投票对象。");
     state.votes[playerId] = targetRoleId;
     await this.save(state);
     return this.snapshot(state, playerId);
@@ -433,7 +659,7 @@ export class GameRoomV2 extends DurableObject<Env> {
 
   private assignRoles(state: RoomState) {
     if (state.assignmentLocked) return;
-    const roles = shuffle(SCRIPTS[state.scriptId].roles.map((item) => item.id));
+    const roles = shuffle(this.scriptRoles(state).map((item) => item.id));
     state.players = state.players.map((player, index) => ({ ...player, roleId: roles[index] ?? null }));
     state.assignmentLocked = true;
   }
@@ -446,6 +672,14 @@ export class GameRoomV2 extends DurableObject<Env> {
 
   private async save(state: RoomState) {
     await this.ctx.storage.put("state", state);
+  }
+
+  private roomPlayerCount(state: RoomState) {
+    return normalizePlayerCount(SCRIPTS[state.scriptId], state.playerCount);
+  }
+
+  private scriptRoles(state: RoomState) {
+    return SCRIPTS[state.scriptId].roles.slice(0, this.roomPlayerCount(state));
   }
 
   private requirePlayer(state: RoomState, playerId: string) {
@@ -461,9 +695,11 @@ export class GameRoomV2 extends DurableObject<Env> {
 
   private snapshot(state: RoomState, playerId?: string) {
     const script = SCRIPTS[state.scriptId];
+    const count = this.roomPlayerCount(state);
+    const roles = this.scriptRoles(state);
     const phase = PHASES[state.phaseIndex];
     const me = playerId ? state.players.find((player) => player.id === playerId) : null;
-    const myRole = me?.roleId ? script.roles.find((roleItem) => roleItem.id === me.roleId) ?? null : null;
+    const myRole = me?.roleId ? roles.find((roleItem) => roleItem.id === me.roleId) ?? null : null;
     const visibleRole = myRole ? {
       id: myRole.id,
       name: myRole.name,
@@ -483,7 +719,9 @@ export class GameRoomV2 extends DurableObject<Env> {
           title: script.title,
           type: script.type,
           duration: script.duration,
-          playerCount: script.playerCount
+          difficulty: script.difficulty,
+          playerCount: count,
+          playerCounts: script.playerCounts ?? [script.playerCount]
         },
         phaseIndex: state.phaseIndex,
         phase,
@@ -497,7 +735,7 @@ export class GameRoomV2 extends DurableObject<Env> {
           order: index + 1,
           role: player.roleId && state.assignmentLocked ? publicRole(script, player.roleId) : null
         })),
-        roles: script.roles.map((roleItem) => publicRole(script, roleItem.id)),
+        roles: roles.map((roleItem) => publicRole(script, roleItem.id)),
         locations: phase.id === "investigate" ? script.locations.map(({ id, name }) => ({ id, name })) : [],
         publicClues: phase.id === "clue1" ? script.publicClues : [],
         reveal: phase.id === "reveal" ? script.reveal : "",
@@ -537,8 +775,14 @@ async function parseJson<T extends Record<string, unknown>>(request: Request): P
 }
 
 function normalizeScriptId(value: unknown): ScriptId {
-  if (value === "rainy-manor" || value === "snow-sanatorium" || value === "seventh-letter") return value;
+  if (typeof value === "string" && SCRIPTS[value]) return value;
   throw new Error("未知剧本。");
+}
+
+function normalizePlayerCount(script: ScriptPack, value: unknown) {
+  const allowed = script.playerCounts ?? [script.playerCount];
+  const requested = Number(value);
+  return allowed.includes(requested) ? requested : script.playerCount;
 }
 
 function getRoomStub(env: Env, code: string) {
@@ -555,7 +799,9 @@ async function handleApi(request: Request, env: Env, url: URL) {
           title: script.title,
           type: script.type,
           duration: script.duration,
+          difficulty: script.difficulty,
           playerCount: script.playerCount,
+          playerCounts: script.playerCounts ?? [script.playerCount],
           roles: script.roles.map((roleItem) => publicRole(script, roleItem.id))
         }))
       });
@@ -566,9 +812,10 @@ async function handleApi(request: Request, env: Env, url: URL) {
       const nickname = String(body.nickname ?? "").trim();
       if (!nickname) return badRequest("请输入昵称。");
       const scriptId = normalizeScriptId(body.scriptId);
+      const playerCount = Number(body.playerCount);
       const code = roomCode();
       const stub = getRoomStub(env, code);
-      return json(await stub.create(code, scriptId, nickname));
+      return json(await stub.create(code, scriptId, nickname, playerCount));
     }
 
     if (parts[0] === "api" && parts[1] === "rooms" && parts[2]) {
@@ -688,7 +935,8 @@ async function createRoom(event) {
       method: "POST",
       body: JSON.stringify({
         nickname: form.get("nickname"),
-        scriptId: form.get("scriptId")
+        scriptId: form.get("scriptId"),
+        playerCount: Number(form.get("playerCount"))
       })
     });
     saveSession(data);
@@ -762,15 +1010,20 @@ function render() {
   bind();
 }
 
+function scriptCounts(script) {
+  return script.playerCounts || [script.playerCount];
+}
+
 function homeView() {
-  const counts = [...new Set(state.scripts.map((script) => String(script.playerCount)))].sort((a, b) => Number(a) - Number(b));
+  const counts = [...new Set(state.scripts.flatMap((script) => scriptCounts(script)).map(String))].sort((a, b) => Number(a) - Number(b));
+  if (!counts.includes(state.selectedCount)) state.selectedCount = counts[0] || "7";
   const countOptions = counts.map((count) => "<option value=\\"" + count + "\\" " + (state.selectedCount === count ? "selected" : "") + ">" + count + "人</option>").join("");
-  const filteredScripts = state.scripts.filter((script) => String(script.playerCount) === state.selectedCount);
-  const scriptOptions = filteredScripts.map((script) => "<option value=\\"" + script.id + "\\">" + script.title + " · " + script.duration + "</option>").join("");
+  const filteredScripts = state.scripts.filter((script) => scriptCounts(script).map(String).includes(state.selectedCount));
+  const scriptOptions = filteredScripts.map((script) => "<option value=\\"" + script.id + "\\">" + script.title + " · " + (script.difficulty || "") + " · " + script.duration + "</option>").join("");
   return \`
     <section class="topbar">
       <div>
-        <p class="eyebrow">7人无主持人</p>
+        <p class="eyebrow">4-7人无主持人</p>
         <h1>剧本杀自动房间</h1>
       </div>
       <span class="pill">Cloudflare Workers 原型</span>
@@ -819,7 +1072,7 @@ function roomView() {
       <div>
         <p class="eyebrow">\${room.script.title}</p>
         <h1>房间 \${room.code}</h1>
-        <p class="sub">\${room.script.type} · \${room.script.duration}</p>
+        <p class="sub">\${room.script.type} · \${room.script.difficulty || ""} · \${room.script.duration} · \${room.script.playerCount}人局</p>
       </div>
       <button class="ghost" data-reset>退出本机身份</button>
     </section>
