@@ -15,8 +15,12 @@ interface ScriptPack {
   title: string;
   type: string;
   duration: string;
+  playerCount: number;
   roles: Role[];
   locations: { id: string; name: string; clue: string }[];
+  publicClues: string[];
+  reveal: string;
+  phaseAudio?: Record<string, string>;
 }
 
 interface Player {
@@ -45,7 +49,7 @@ interface Env {
 }
 
 const PHASES = [
-  { id: "lobby", name: "等待加入", instruction: "7 名玩家加入后，房主点击开始。开始后系统会随机分配角色。" },
+  { id: "lobby", name: "等待加入", instruction: "玩家到齐后，房主点击开始。开始后系统会随机分配角色。" },
   { id: "role", name: "角色阅读", instruction: "阅读你的公开身份和个人开局信息。不要展示自己的手机页面。" },
   { id: "intro", name: "第一轮自我介绍", instruction: "按系统顺序发言，每人用第一人称介绍自己的公开身份与案发前状态。" },
   { id: "clue1", name: "第一批公共线索", instruction: "阅读公共线索。你可以在微信群中讨论，也可以选择暂时隐瞒自己的判断。" },
@@ -63,82 +67,187 @@ const SCRIPTS: Record<ScriptId, ScriptPack> = {
     title: "雨夜庄园",
     type: "本格推理 / 家族恩怨 / 身份反转 / 遗嘱争夺",
     duration: "3.5-5 小时",
+    playerCount: 7,
     roles: [
-      role("a1", "林子轩", "林家长子", "适合敢发言、能扛嫌疑的玩家"),
-      role("a2", "苏婉", "林子轩之妻", "适合会演、会周旋的玩家"),
-      role("a3", "林雨薇", "林家女儿", "适合情绪表达强、代入感好的玩家"),
-      role("a4", "王福", "林家老管家", "适合稳重、愿意记时间线的玩家"),
-      role("a5", "李志强", "私人医生", "适合理性、喜欢分析证据的玩家"),
-      role("a6", "陈浩", "家族律师", "适合逻辑强、会隐藏信息的玩家"),
-      role("a7", "小兰", "林家女仆", "适合安静型、后期能爆发的玩家")
+      role("a1", "林子轩", "林家长子", "适合敢发言、能扛嫌疑的玩家", {
+        role: "你是林致远的长子。公司资金链断裂，你急需遗产或父亲的资金支持。晚餐后你情绪很差，因为父亲当众宣布明天要修改遗嘱。案发前你曾在9:05到9:15进入书房向父亲要钱，被他拒绝并斥责无能。你愤怒离开。你知道自己会成为第一嫌疑人，所以发言时要尽量解释债务压力，但不要主动说出争吵细节，除非被追问。",
+        act2: "你回忆起苏婉曾多次催你向外借钱，并暗示只要父亲去世，你们就能翻身。你确实借了高利贷，但你没有杀人。你离开书房后喝了酒，后来意识有些模糊。你可以承认你和父亲吵过，但要强调你离开时父亲还活着。",
+        reveal: "你是强嫌疑人之一。你的债务和争吵制造了动机，但你离开书房的时间早于真正死亡节点。"
+      }),
+      role("a2", "苏婉", "林子轩之妻", "适合会演、会周旋的玩家", {
+        role: "你是林子轩的妻子。你一直希望丈夫继承林家财产，因为你们已经被债务压得喘不过气。案发停电时，你并没有一直在房间。你偷偷去过书房，想找遗嘱草稿。你发现林致远已经倒在血泊中，但你没有呼救，而是先翻找抽屉。你的袖口沾了血，耳环也可能掉在现场。你必须隐瞒自己进过书房。",
+        act2: "你和律师陈浩有暧昧关系，他知道不少遗嘱信息。你房间里有高利贷借据复印件。你可以把嫌疑引向林子轩、陈浩或遗嘱争夺，但一旦别人拿出血迹和耳环，你只能承认自己接触过尸体，强调当时林致远已经死了。",
+        reveal: "你是最大红鲱鱼。你的证据证明你去过书房、接触过尸体、有利益动机，但不能证明你杀人。"
+      }),
+      role("a3", "林雨薇", "林家女儿", "适合情绪表达强、代入感好的玩家", {
+        role: "你是林致远的女儿。父亲一直控制你的人生，甚至逼你处理掉不被家族接受的感情和孩子。晚餐时他说要修改遗嘱，你怀疑自己会被取消继承权。你对父亲有怨，但更多是想离开这个家。案发时你情绪崩溃，不想让别人知道自己的私事。",
+        act2: "你曾计划离家，但没有杀父。你可以提供家族内部矛盾，也可以指出父亲今晚召集所有人并非单纯谈遗嘱。你对小兰的来历有一点疑惑：父亲最近似乎对某个旧人和孩子很敏感。",
+        reveal: "你承担情感动机线。你的怨恨真实存在，但缺少关键作案时间和现场证据。"
+      }),
+      role("a4", "王福", "林家老管家", "适合稳重、愿意记时间线的玩家", {
+        role: "你是林家的老管家。你挪用过账款，因为儿子治病急需钱。林致远已经发现账目异常，你担心被赶走。9:20停电后，你去保险丝箱附近修电。9:28到9:35之间你一直在处理保险丝。你听到西侧走廊有脚步声，但没有看清是谁。",
+        act2: "你确实有挪款秘密，但不是为了自己挥霍。你可以证明电力在9:35恢复。你还注意到保险丝箱附近有不正常痕迹，像是有人故意拉断过。你需要把大家拉回时间线，不要只看动机。",
+        reveal: "你是时间证人。你的修电时间能帮助玩家判断停电期间谁有行动机会。"
+      }),
+      role("a5", "李志强", "私人医生", "适合理性、喜欢分析证据的玩家", {
+        role: "你是林致远的私人医生。你隐瞒过他的真实病情，也曾私下开过镇静药，因此害怕被怀疑下药。案发后你检查尸体，发现胸口裁纸刀是直接死因，但死亡时间可能比众人以为的更早。",
+        act2: "你判断林致远死亡时间更接近9:20，而不是9:35之后。苏婉如果9:23之后才到书房，她可能接触过尸体，但未必是刺杀者。你也可以说明现场不像药物致死，镇静药线只是干扰。",
+        reveal: "你是死因和死亡时间证人。你的判断是排除苏婉直接杀人的关键。"
+      }),
+      role("a6", "陈浩", "家族律师", "适合逻辑强、会隐藏信息的玩家", {
+        role: "你是林家的律师。8:40到9:00你与林致远单独谈遗嘱修改。他准备把大部分财产转入慈善基金，只给子女少量固定资产。你还听见他提到当年的女人和她的孩子不能再影响林家。你与苏婉有暧昧关系，这会让你很危险。",
+        act2: "你知道林致远正在查一个可能存在的私生女。你不愿主动公开和苏婉的关系，但如果遗嘱线被讨论，你可以透露慈善基金和旧人孩子的信息。你不是凶手，但你的隐瞒会让你看起来像操控遗嘱的人。",
+        reveal: "你是遗嘱线与身份线桥梁。你知道的信息能把推理从遗产争夺引向私生女复仇。"
+      }),
+      role("a7", "小兰", "林家女仆", "适合安静型、后期能爆发的玩家", {
+        role: "你是林家的女仆。你来庄园并不只是工作。你母亲曾被林致远抛弃，临终前留下信和半枚旧项链。今晚你听见林致远提到当年的女人和孩子，情绪失控。9:16到9:19你进入书房，要求他承认你的身份。他羞辱你和你的母亲。你必须隐藏自己的真实身份。",
+        act2: "你熟悉庄园，也知道保险丝箱位置。你身上有半枚旧项链，另一半可能与林致远有关。你要表现得低调，不要主动引导大家查女仆房、旧照片、项链和保险丝箱。若被问到停电时在哪，你可以说自己在厨房或仆人区。",
+        reveal: "你是真凶。你的身份动机、作案时间、保险丝行为、现场布料和旧项链构成完整闭环。"
+      })
     ],
     locations: [
-      clue("study", "书房", "书房现场线索位：在这里填入书房相关线索。"),
-      clue("corridor", "西侧走廊", "走廊线索位：在这里填入脚步、门缝、地毯等线索。"),
-      clue("fusebox", "保险丝箱", "保险丝箱线索位：在这里填入停电相关线索。"),
-      clue("suwans-room", "苏婉房间", "苏婉房间线索位：在这里填入红鲱鱼线索。"),
-      clue("maids-room", "女仆房", "女仆房线索位：在这里填入身份线索。"),
-      clue("medicine-case", "医生药箱", "药箱线索位：在这里填入死因/死亡时间线索。"),
-      clue("lawyer-bag", "律师公文包", "公文包线索位：在这里填入遗嘱线索。")
-    ]
+      clue("study", "书房", "书房地毯边发现一枚女士耳环，抽屉有被翻动痕迹。林致远手中攥着一小块类似女仆围裙的布料。"),
+      clue("corridor", "西侧走廊", "停电期间有人从书房方向快速离开。走廊地毯边缘有一小段被勾断的浅色线头。"),
+      clue("fusebox", "保险丝箱", "保险丝箱上有细小血迹或手印，像是拉闸的人手上曾经沾血。"),
+      clue("suwans-room", "苏婉房间", "房间内有高利贷借据复印件，抽屉里还有她与陈浩的暧昧信件。"),
+      clue("maids-room", "女仆房", "小兰物品中有半枚旧项链和一封母亲留下的旧信，信中提到林家旧事。"),
+      clue("medicine-case", "医生药箱", "镇静药数量对不上，但医生判断死因并非药物。死亡时间更接近9:20。"),
+      clue("lawyer-bag", "律师公文包", "遗嘱草稿显示林致远准备把大部分财产转入慈善基金，并提到一个旧人和孩子。")
+    ],
+    publicClues: [
+      "8:00晚餐时，林致远宣布明天正式修改遗嘱，所有人今晚留在庄园。",
+      "9:20庄园停电，9:35电力恢复，9:38书房方向传来惊呼。",
+      "死者胸口插着桌上的裁纸刀，书房门半开。"
+    ],
+    reveal: "真凶是小兰。苏婉的血迹和耳环只能证明她在9:23之后去过书房、接触过尸体并翻找遗嘱；医生判断死亡时间更接近9:20。小兰在9:16到9:20与林致远对质，因私生女身份和母亲旧怨刺杀死者，随后拉断保险丝制造混乱。保险丝箱血迹、女仆围裙布料、裙角线头、旧照片和半枚项链共同形成闭环。"
   },
   "snow-sanatorium": {
     id: "snow-sanatorium",
     title: "雪夜疗养院",
     type: "本格推理 / 医疗秘密 / 旧案复仇 / 伪装身份",
     duration: "4-5 小时",
+    playerCount: 7,
     roles: [
-      role("b1", "沈墨", "院长之子", "适合主动发言、利益动机明显的玩家"),
-      role("b2", "许曼青", "院长现任妻子", "适合会演感情线、能拉扯关系的玩家"),
-      role("b3", "周启明", "副院长", "适合逻辑型、能处理复杂旧事线的玩家"),
-      role("b4", "叶澜", "护士长", "适合稳重、能掌握关键信息的玩家"),
-      role("b5", "顾辰", "病人家属", "适合正义感强、喜欢追查真相的玩家"),
-      role("b6", "白晓", "年轻护士", "适合低调、细节型、后期反转感强的玩家"),
-      role("b7", "陆远", "药剂师", "适合喜欢证据线、药物线的玩家")
+      role("b1", "沈墨", "院长之子", "适合主动发言、利益动机明显的玩家", {
+        role: "你是院长沈敬山的儿子。你表面上即将继承疗养院股份，但实际上你偷偷变卖过疗养院资产，害怕父亲发现后取消你的继承安排。今晚父亲要关闭旧病区、清理旧病历，你觉得他还有别的计划。你有动机，但你不想让别人知道资产问题。",
+        act2: "你知道父亲近年来身体不好，也知道他经常吃心脏药。案发后现场像心梗，但你对父亲办公室的反锁状态很在意。你可以质疑许曼青和周启明的关系，也可以把火力引向药剂师陆远。",
+        reveal: "你是继承线嫌疑人。你有经济动机，但无法解释颈部针孔和毒素接触方式。"
+      }),
+      role("b2", "许曼青", "院长现任妻子", "适合会演感情线、能拉扯关系的玩家", {
+        role: "你是沈敬山的现任妻子。你担心他离婚后让你净身出户。你与副院长周启明关系暧昧，今晚你确实动过沈敬山的心脏药。你希望别人相信这是药物或心梗问题，但你不能暴露自己换药的行为。",
+        act2: "你换过心脏药，但那不是致命原因。你知道沈敬山最近要辞退叶澜，还要清理十年前的旧病历。你可以承认婚姻矛盾，但要避免别人把你和周启明绑定成共谋。",
+        reveal: "你是药物线红鲱鱼。你确实动过药，也有利益动机，但死者没有真正吞下心脏药，死因是颈部细针毒素。"
+      }),
+      role("b3", "周启明", "副院长", "适合逻辑型、能处理复杂旧事线的玩家", {
+        role: "你是白桦疗养院副院长。你和沈敬山争权多年，也曾参与过十年前病历篡改。今晚你担心旧档案被清理后，所有责任会被推到你身上。案发时你在处理旧档案，不在办公室附近。",
+        act2: "你和许曼青有私情。你知道十年前某个普通病人的死亡被疗养院包装成自然事故。叶澜也知道一部分真相。你不是凶手，但你会因为销毁档案显得非常可疑。",
+        reveal: "你是旧案桥梁和争权嫌疑人。你的行为解释了档案线，但不能解释直接接触死者颈部的机会。"
+      }),
+      role("b4", "叶澜", "护士长", "适合稳重、能掌握关键信息的玩家", {
+        role: "你是护士长。沈敬山准备辞退你，并可能让你背十年前医疗事故的锅。你知道旧病历里有被改过的记录，也知道沈敬山晚上常让护士按摩颈部缓解旧伤。",
+        act2: "你可以提供关键护理习惯：不是所有人都能自然接近沈敬山颈部，护士身份最方便。你参与过旧案隐瞒，但这些年一直良心不安。你要判断年轻护士白晓为何特别关注旧病区。",
+        reveal: "你是旧案证人。你掌握按摩习惯和病历篡改信息，是锁定作案方式的关键。"
+      }),
+      role("b5", "顾辰", "病人家属", "适合正义感强、喜欢追查真相的玩家", {
+        role: "你是病人家属。你的母亲死于疗养院旧事故，你一直怀疑沈敬山隐瞒真相。你来到这里并非单纯探病，而是为了调查旧案。你有复仇动机，但你并没有杀人。",
+        act2: "你查到十年前病历中有涂改痕迹，一个死者女儿的名字被遮住。你可以推动大家追查旧病历，但注意：真正凶手可能和你一样关注旧案，却比你更接近医疗现场。",
+        reveal: "你是正义调查线。你的动机强，但你缺少护士式接近机会和毒素操作证据。"
+      }),
+      role("b6", "白晓", "年轻护士", "适合低调、细节型、后期反转感强的玩家", {
+        role: "你是年轻护士。你在疗养院受过沈敬山羞辱和压榨，但这不是你真正留下来的原因。你的母亲是十年前旧事故中的死者。你进入疗养院，是为了找到旧病历并复仇。你必须隐藏真实身份。",
+        act2: "你知道沈敬山有颈椎旧伤，晚上常让护士帮他按摩。案发当晚9:35你借送热水进入办公室，假装按摩，用袖口藏着的细针将神经毒素刺入他颈部。毒素不会立刻致死，能制造死亡时间误导。你要把怀疑引向陆远的药房毒素和许曼青的心脏药。",
+        reveal: "你是真凶。你利用护士身份、按摩习惯和毒素延迟发作制造心梗假象。旧病历、吊坠照片、手套腐蚀痕迹和颈部针孔共同指向你。"
+      }),
+      role("b7", "陆远", "药剂师", "适合喜欢证据线、药物线的玩家", {
+        role: "你是药剂师。你被沈敬山发现偷药，因此非常害怕案发后被查。药房确实有毒素少了一支，登记本也被人改过。你偷的是镇痛药，不是杀人的毒素。",
+        act2: "你知道毒素需要专业使用，且不会像普通口服药那样立刻被发现。你可以指出心脏药不是关键，但别人很可能先怀疑你。你要努力证明毒素不等于你使用毒素。",
+        reveal: "你是药物线强嫌疑人。你能解释毒素来源，但不能解释谁能接近死者颈部完成注射。"
+      })
     ],
     locations: [
-      clue("office", "院长办公室", "办公室线索位：在这里填入针孔、药片、现场状态。"),
-      clue("pharmacy", "药房", "药房线索位：在这里填入药物登记与缺失药剂。"),
-      clue("old-ward", "旧病区", "旧病区线索位：在这里填入十年前旧案信息。"),
-      clue("archive", "病历档案室", "档案线索位：在这里填入病历篡改证据。"),
-      clue("nurse-station", "护士站", "护士站线索位：在这里填入值班表和护理习惯。"),
-      clue("guest-room", "家属休息室", "家属线索位：在这里填入调查资料。"),
-      clue("snow-path", "雪地通道", "雪地线索位：在这里填入行动路线。")
-    ]
+      clue("office", "院长办公室", "死者颈部有一个极细小针孔，桌边地毯上有一滴透明药液，心脏药片在手边但没有真正吞下。"),
+      clue("pharmacy", "药房", "药房毒素少了一支，登记本被人改过；镇痛药数量也异常。"),
+      clue("old-ward", "旧病区", "十年前旧病区曾发生医疗事故，普通病人死亡后记录被改写。"),
+      clue("archive", "病历档案室", "旧病历中死者女儿姓名被涂黑，部分责任记录被篡改。"),
+      clue("nurse-station", "护士站", "值班表显示白晓熟悉沈敬山夜间按摩习惯，叶澜也知道这个习惯。"),
+      clue("guest-room", "家属休息室", "顾辰带来旧案调查资料，资料指向十年前死者家属一直在寻找真相。"),
+      clue("snow-path", "雪地通道", "暴雪封山，无人能离开疗养院。案发前后没有外来脚印。")
+    ],
+    publicClues: [
+      "暴雪封山，白桦疗养院与外界失联。",
+      "晚上10:00，沈敬山被发现死在办公室，现场像心梗。",
+      "尸检发现死者颈部有极细小针孔，真正死因与毒素有关。"
+    ],
+    reveal: "真凶是白晓。她是十年前死亡病人的女儿，进入疗养院是为了寻找旧病历并复仇。9:35她借送热水进入办公室，利用护士身份和按摩习惯接近死者颈部，用细针注入神经毒素。死者短时间内还能行动，因此拿心脏药自救，制造心梗和死亡时间误导。"
   },
   "seventh-letter": {
     id: "seventh-letter",
     title: "海上第七封信",
     type: "游轮密室 / 遗产争夺 / 失踪旧案 / 双重身份",
     duration: "4-5.5 小时",
+    playerCount: 7,
     roles: [
-      role("c1", "秦越", "死者养子", "适合承压能力强、能处理继承线的玩家"),
-      role("c2", "方岚", "死者前妻", "适合成熟型、会谈判和情绪输出的玩家"),
-      role("c3", "唐修", "死者编辑", "适合文艺型、会隐藏小秘密的玩家"),
-      role("c4", "贺明", "游轮船长", "适合稳重、能控场或装镇定的玩家"),
-      role("c5", "宋知夏", "年轻作家", "适合表达欲强、冲突感强的玩家"),
-      role("c6", "林珂", "私人助理", "适合观察细节、会处理信息差的玩家"),
-      role("c7", "乔安", "游轮钢琴师", "适合神秘感强、低调但会演的玩家")
+      role("c1", "秦越", "死者养子", "适合承压能力强、能处理继承线的玩家", {
+        role: "你是秦柏川的养子。你一直以继承人身份生活，但你知道自己的收养手续并不完整。晚宴上他说第七封信会改变所有人的命运，你担心信里写着会让你失去继承权的内容。",
+        act2: "桌上的六封信揭露了许多人的秘密，但第七封信不见了。你最害怕别人追问你的合法继承身份。你可以怀疑方岚或宋知夏，但要注意广播遗言是否真的来自死者临终。",
+        reveal: "你是遗产线强嫌疑人。你的继承危机真实存在，但死亡时间提前后，你缺少关键离场机会。"
+      }),
+      role("c2", "方岚", "死者前妻", "适合成熟型、会谈判和情绪输出的玩家", {
+        role: "你是秦柏川前妻。你想拿回共同财产，也隐瞒过一个孩子的旧事。秦柏川包下游轮并宣布第七封信时，你意识到他可能要公开过去。你有动机，但你没有杀人。",
+        act2: "你知道秦柏川十五年前毁掉过一位无名女作家。你可以谈财产，也可以谈旧事，但要谨慎，因为你的隐瞒会让你显得像第七封信的核心人物。",
+        reveal: "你承担旧关系和财产线。你知道部分旧事，却不是拿走第七封信的人。"
+      }),
+      role("c3", "唐修", "死者编辑", "适合文艺型、会隐藏小秘密的玩家", {
+        role: "你是秦柏川的编辑。你被他压榨多年，也偷过他的手稿。你知道他靠包装和掠夺作家成名。今晚他在六封信中揭露大家秘密，让你非常不安。",
+        act2: "你偷过手稿，但不是第七封信。你可以提供出版圈旧闻：十五年前有一位女作家作品被秦柏川拿走，之后自杀。你要避免别人把偷手稿和杀人直接联系起来。",
+        reveal: "你是手稿线证人。你的秘密指向秦柏川旧罪，但你不是复仇者。"
+      }),
+      role("c4", "贺明", "游轮船长", "适合稳重、能控场或装镇定的玩家", {
+        role: "你是游轮船长。秦柏川掌握你的走私证据，可能利用第七封信威胁你。案发前你负责航线调整，游轮监控短暂出现死角。你需要解释自己为什么调整航线。",
+        act2: "你知道案发时海况复杂，但监控死角确实给凶手提供了操作空间。你可以证明船外无人潜入，所有嫌疑都在船上。你要小心别人把密室和航线问题都推给你。",
+        reveal: "你是密室环境和监控死角嫌疑人。你创造了条件，但不是进入书房杀人的人。"
+      }),
+      role("c5", "宋知夏", "年轻作家", "适合表达欲强、冲突感强的玩家", {
+        role: "你是年轻作家。你与秦柏川有版权纠纷，认为他剽窃你的作品。你曾公开说过他该死，因此案发后你会非常显眼。你恨他，但你的纠纷是近期事件。",
+        act2: "你可以指出秦柏川的剽窃并非第一次。十五年前的旧案比你的纠纷更深。你要证明自己在广播响起前后没有进入私人书房。",
+        reveal: "你是近期剽窃纠纷红鲱鱼。真正仇恨来自十五年前旧案，而不是你的近期作品。"
+      }),
+      role("c6", "林珂", "私人助理", "适合观察细节、会处理信息差的玩家", {
+        role: "你是秦柏川的私人助理。你掌握他的录音设备，也帮他整理过录音素材。案发时广播里传来秦柏川的声音，你知道这套设备可以预设播放，但你不想被怀疑制造遗言。",
+        act2: "你可以确认11:00广播不一定是实时广播。广播室设备有预设播放记录。你没有杀人，但你的设备知识会让你成为关键嫌疑人。你要引导大家区分录音能力和实际作案机会。",
+        reveal: "你是录音误导线桥梁。你证明广播遗言可能是预设录音，从而把死亡时间提前到10:35到10:45。"
+      }),
+      role("c7", "乔安", "游轮钢琴师", "适合神秘感强、低调但会演的玩家", {
+        role: "你是游轮钢琴师。你身份神秘，真正目的不是演奏。十五年前被秦柏川毁掉的女作家是你的姐姐。你登船是为了找回姐姐的原始手稿，并逼秦柏川承认罪行。你必须隐藏自己与旧案的关系。",
+        act2: "10:35你借送乐谱进入私人书房，拿出姐姐手稿质问秦柏川。他承认剽窃并嘲讽死人不会说话。你用书桌上的拆信刀刺杀他。之后你用细线布置伪密室，设置11:00录音广播，并拿走写有你真实身份的第七封信。你要声称自己一直在宴会厅弹琴。",
+        reveal: "你是真凶。你利用录音误导死亡时间，用细线制造伪密室，并拿走第七封信隐藏身份。钢琴曲中断、手指划伤、鱼线痕迹和第七封信残片共同指向你。"
+      })
     ],
     locations: [
-      clue("private-study", "私人书房", "书房线索位：在这里填入密室现场和刀具线索。"),
-      clue("broadcast-room", "广播室", "广播线索位：在这里填入录音设备线索。"),
-      clue("vent", "通风口", "通风口线索位：在这里填入细线和机关线索。"),
-      clue("ballroom", "宴会厅", "宴会厅线索位：在这里填入不在场证明。"),
-      clue("captain-room", "船长室", "船长室线索位：在这里填入航线与监控死角。"),
-      clue("fireplace", "壁炉", "壁炉线索位：在这里填入第七封信残片。"),
-      clue("manuscript", "手稿箱", "手稿线索位：在这里填入旧案证据。")
-    ]
+      clue("private-study", "私人书房", "房门内侧插销有细线摩擦痕迹，桌上的拆信刀少量血迹被擦过。"),
+      clue("broadcast-room", "广播室", "设备显示11:00播放的是预设录音，不是实时广播。录音素材来自秦柏川旧录音。"),
+      clue("vent", "通风口", "通风口边缘发现一小段透明鱼线，位置能连接门缝方向。"),
+      clue("ballroom", "宴会厅", "乔安的钢琴曲中断过约3分钟，但她声称自己一直在弹。"),
+      clue("captain-room", "船长室", "航线调整造成短暂监控死角，但没有证据显示外人登船。"),
+      clue("fireplace", "壁炉", "第七封信被烧毁一半，残留纸角上还能看到“她妹妹”三个字。"),
+      clue("manuscript", "手稿箱", "秦柏川旧手稿封面上有一位无名女作家的笔迹，与十五年前旧案有关。")
+    ],
+    publicClues: [
+      "晚宴时秦柏川宣布第二天公开第七封信，这封信会改变所有人的命运。",
+      "11:00广播里传来秦柏川的声音，众人随后发现私人书房反锁，秦柏川胸口中刀。",
+      "桌上有六封已经拆开的信，唯独第七封信不见了。"
+    ],
+    reveal: "真凶是乔安。所谓广播遗言是预设录音，不是秦柏川临死前实时发声。真正死亡时间在10:40左右。乔安10:35借送乐谱进入书房，用拆信刀杀死秦柏川，随后用细线制造伪密室，设置11:00录音，并拿走第七封信隐藏自己是十五年前女作家妹妹的身份。"
   }
 };
 
-function role(id: string, name: string, publicIdentity: string, fit: string): Role {
+function role(id: string, name: string, publicIdentity: string, fit: string, privateByPhase?: Record<string, string>): Role {
   return {
     id,
     name,
     publicIdentity,
     fit,
-    privateByPhase: {
+    privateByPhase: privateByPhase ?? {
       role: "开局个人剧本占位：这里填入该角色只在开局可见的信息。",
       act2: "第二幕个人剧本占位：这里填入中段解锁的信息。",
       reveal: "复盘占位：这里填入该角色结局相关说明。"
@@ -232,7 +341,8 @@ export class GameRoomV2 extends DurableObject<Env> {
       return this.snapshot(state, returning.id);
     }
     if (state.assignmentLocked) throw new Error("房间已经开始，不能再加入新玩家。");
-    if (state.players.length >= 7) throw new Error("房间已满。");
+    const script = SCRIPTS[state.scriptId];
+    if (state.players.length >= script.playerCount) throw new Error("房间已满。");
     const player: Player = {
       id: randomToken(12),
       nickname,
@@ -242,7 +352,7 @@ export class GameRoomV2 extends DurableObject<Env> {
       readyPhase: null
     };
     state.players.push(player);
-    if (state.players.length === 7) this.assignRoles(state);
+    if (state.players.length === script.playerCount) this.assignRoles(state);
     await this.save(state);
     return this.snapshot(state, player.id);
   }
@@ -250,7 +360,8 @@ export class GameRoomV2 extends DurableObject<Env> {
   async start(playerId: string) {
     const state = await this.requireState();
     this.requireOwner(state, playerId);
-    if (state.players.length !== 7) throw new Error("需要 7 名玩家到齐后才能开始。");
+    const script = SCRIPTS[state.scriptId];
+    if (state.players.length !== script.playerCount) throw new Error(`需要 ${script.playerCount} 名玩家到齐后才能开始。`);
     this.assignRoles(state);
     state.phaseIndex = Math.max(state.phaseIndex, 1);
     await this.save(state);
@@ -272,7 +383,8 @@ export class GameRoomV2 extends DurableObject<Env> {
     const state = await this.requireState();
     const player = this.requirePlayer(state, playerId);
     player.readyPhase = state.phaseIndex;
-    if (state.players.length === 7 && state.players.every((candidate) => candidate.readyPhase === state.phaseIndex)) {
+    const script = SCRIPTS[state.scriptId];
+    if (state.players.length === script.playerCount && state.players.every((candidate) => candidate.readyPhase === state.phaseIndex)) {
       state.phaseIndex = Math.min(PHASES.length - 1, state.phaseIndex + 1);
       state.speakingIndex = 0;
       state.players = state.players.map((candidate) => ({ ...candidate, readyPhase: null }));
@@ -370,7 +482,8 @@ export class GameRoomV2 extends DurableObject<Env> {
           id: script.id,
           title: script.title,
           type: script.type,
-          duration: script.duration
+          duration: script.duration,
+          playerCount: script.playerCount
         },
         phaseIndex: state.phaseIndex,
         phase,
@@ -386,6 +499,9 @@ export class GameRoomV2 extends DurableObject<Env> {
         })),
         roles: script.roles.map((roleItem) => publicRole(script, roleItem.id)),
         locations: phase.id === "investigate" ? script.locations.map(({ id, name }) => ({ id, name })) : [],
+        publicClues: phase.id === "clue1" ? script.publicClues : [],
+        reveal: phase.id === "reveal" ? script.reveal : "",
+        phaseAudio: script.phaseAudio?.[phase.id] ?? "",
         votes: phase.id === "reveal" ? voteCounts : {},
         voteProgress: Object.keys(state.votes).length
       },
@@ -439,6 +555,7 @@ async function handleApi(request: Request, env: Env, url: URL) {
           title: script.title,
           type: script.type,
           duration: script.duration,
+          playerCount: script.playerCount,
           roles: script.roles.map((roleItem) => publicRole(script, roleItem.id))
         }))
       });
@@ -513,6 +630,7 @@ const state = {
   me: null,
   roomCode: localStorage.getItem("mm_room") || "",
   playerId: localStorage.getItem("mm_player") || "",
+  selectedCount: localStorage.getItem("mm_player_count") || "7",
   timer: 120,
   timerHandle: null,
   error: ""
@@ -645,7 +763,10 @@ function render() {
 }
 
 function homeView() {
-  const scriptOptions = state.scripts.map((script) => "<option value=\\"" + script.id + "\\">" + script.title + " · " + script.duration + "</option>").join("");
+  const counts = [...new Set(state.scripts.map((script) => String(script.playerCount)))].sort((a, b) => Number(a) - Number(b));
+  const countOptions = counts.map((count) => "<option value=\\"" + count + "\\" " + (state.selectedCount === count ? "selected" : "") + ">" + count + "人</option>").join("");
+  const filteredScripts = state.scripts.filter((script) => String(script.playerCount) === state.selectedCount);
+  const scriptOptions = filteredScripts.map((script) => "<option value=\\"" + script.id + "\\">" + script.title + " · " + script.duration + "</option>").join("");
   return \`
     <section class="topbar">
       <div>
@@ -658,6 +779,7 @@ function homeView() {
     <section class="grid two">
       <form class="panel" data-create>
         <h2>创建房间</h2>
+        <label>游戏人数<select name="playerCount" data-count-filter required>\${countOptions}</select></label>
         <label>选择剧本<select name="scriptId" required>\${scriptOptions}</select></label>
         <label>你的昵称<input name="nickname" autocomplete="name" required placeholder="例如：阿明"></label>
         <button type="submit">创建并成为房主</button>
@@ -707,9 +829,10 @@ function roomView() {
         <p class="eyebrow">当前阶段</p>
         <h2>\${room.phase.name}</h2>
         <p>\${room.phase.instruction}</p>
+        \${room.phaseAudio ? "<audio class=\\"phase-audio\\" controls autoplay src=\\"" + room.phaseAudio + "\\"></audio>" : ""}
       </div>
       <div class="actions">
-        \${room.phaseIndex === 0 && me?.isOwner ? "<button data-action=\\"start\\">7人到齐后开始</button>" : ""}
+        \${room.phaseIndex === 0 && me?.isOwner ? "<button data-action=\\"start\\">" + room.script.playerCount + "人到齐后开始</button>" : ""}
         \${me?.isOwner && room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button data-action=\\"advance\\">进入下一阶段</button>" : ""}
         \${room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button class=\\"secondary\\" data-action=\\"ready\\">我已完成本阶段</button>" : ""}
         <button class="secondary" data-refresh>刷新状态</button>
@@ -743,6 +866,7 @@ function roomView() {
         <div class="button-grid">\${locations}</div>
         <p class="muted">每名玩家本阶段只能选择一次。线索只会先显示给你自己。</p>
       </section>\` : ""}
+    \${room.phase.id === "clue1" ? publicClueView(room) : ""}
     \${room.phase.id === "vote" ? \`
       <section class="panel wide">
         <h2>最终投票</h2>
@@ -759,7 +883,17 @@ function revealView(room) {
     <section class="panel wide">
       <h2>投票结果</h2>
       <ol class="players">\${rows}</ol>
-      <div class="private">复盘真相占位：后续把每套剧本的最终证据闭环填入这里，只有进入复盘阶段才显示。</div>
+      <div class="private">\${room.reveal}</div>
+    </section>
+  \`;
+}
+
+function publicClueView(room) {
+  const rows = room.publicClues.map((clue, index) => \`<li><span>线索 \${index + 1}</span><strong>\${clue}</strong></li>\`).join("");
+  return \`
+    <section class="panel wide">
+      <h2>公共线索</h2>
+      <ol class="players">\${rows}</ol>
     </section>
   \`;
 }
@@ -770,6 +904,11 @@ function bind() {
   document.querySelector("[data-reset]")?.addEventListener("click", resetLocal);
   document.querySelector("[data-refresh]")?.addEventListener("click", refresh);
   document.querySelector("[data-timer-start]")?.addEventListener("click", startTimer);
+  document.querySelector("[data-count-filter]")?.addEventListener("change", (event) => {
+    state.selectedCount = event.target.value;
+    localStorage.setItem("mm_player_count", state.selectedCount);
+    render();
+  });
   document.querySelectorAll("[data-action]").forEach((button) => {
     button.addEventListener("click", () => postAction(button.dataset.action));
   });
@@ -929,6 +1068,11 @@ form button { width: 100%; margin-top: 18px; }
   border: 1px dashed var(--line);
   border-radius: 7px;
   line-height: 1.7;
+}
+.phase-audio {
+  display: block;
+  width: min(520px, 100%);
+  margin-top: 14px;
 }
 .players {
   list-style: none;
