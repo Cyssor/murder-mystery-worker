@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { SCRIPT_OPENINGS } from "./generatedOpenings";
 import { ROLE_CARD_OVERRIDES } from "./generatedRoleCards";
 
 type ScriptId = string;
@@ -831,6 +832,7 @@ export class GameRoomV2 extends DurableObject<Env> {
           type: script.type,
           duration: script.duration,
           difficulty: script.difficulty,
+          opening: SCRIPT_OPENINGS[script.id] ?? "",
           playerCount: count,
           playerCounts: script.playerCounts ?? [script.playerCount]
         },
@@ -1219,6 +1221,12 @@ function roomView() {
         <button class="secondary" data-refresh>刷新状态</button>
       </div>
     </section>
+    \${room.phase.id === "lobby" && room.script.opening ? \`
+      <section class="panel wide">
+        <h2>开场剧情</h2>
+        <div class="private">\${room.script.opening}</div>
+        <p class="muted">玩家到齐后，房主点击开始。也可以先把这段剧情读给群里听。</p>
+      </section>\` : ""}
     <section class="grid three">
       <article class="panel">
         <h2>我的角色</h2>
