@@ -54,7 +54,8 @@ interface Env {
 
 const PHASES = [
   { id: "lobby", name: "等待加入", instruction: "玩家到齐后，房主点击开始。开始后系统会随机分配角色。" },
-  { id: "role", name: "角色阅读", instruction: "阅读你的公开身份和个人开局信息。不要展示自己的手机页面。" },
+  { id: "opening", name: "剧情阅读", instruction: "所有玩家先阅读开场剧情，确认自己进入同一个故事背景。读完后每个人都点下一步。" },
+  { id: "role", name: "角色阅读", instruction: "阅读你的公开身份和个人开局信息。不要展示自己的手机页面。读完后每个人都点下一步。" },
   { id: "intro", name: "第一轮自我介绍", instruction: "按系统顺序发言，每人用第一人称介绍自己的公开身份与案发前状态。" },
   { id: "clue1", name: "第一批公共线索", instruction: "阅读公共线索。你可以在微信群中讨论，也可以选择暂时隐瞒自己的判断。" },
   { id: "discuss1", name: "第一轮自由讨论", instruction: "围绕时间线、动机、现场矛盾自由讨论。建议 20 到 30 分钟。" },
@@ -766,6 +767,11 @@ class D1Room {
     if (PHASES[state.phaseIndex]?.id !== "vote") throw new Error("当前不是投票阶段。");
     if (!this.scriptRoles(state).some((roleItem) => roleItem.id === targetRoleId)) throw new Error("未知投票对象。");
     state.votes[playerId] = targetRoleId;
+    if (Object.keys(state.votes).length >= state.players.length) {
+      state.phaseIndex = PHASES.findIndex((phaseItem) => phaseItem.id === "reveal");
+      state.speakingIndex = 0;
+      state.players = state.players.map((candidate) => ({ ...candidate, readyPhase: null }));
+    }
     await this.save(state);
     return this.snapshot(state, playerId);
   }

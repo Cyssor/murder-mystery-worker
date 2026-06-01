@@ -191,18 +191,93 @@ function homeView() {
   `;
 }
 
+function canReady(room) {
+  return !["lobby", "vote", "reveal"].includes(room.phase.id);
+}
+
+function phaseGuide(room, me) {
+  const roleName = me?.role?.name || "你的角色";
+  const guides = {
+    lobby: [
+      "等待所有玩家进入房间。不要提前透露角色，也不要截图发给别人。",
+      "房主确认人数满员后点击开始，系统会自动分配角色。"
+    ],
+    opening: [
+      "本阶段只读公共剧情，不讨论凶手。",
+      "可以照着念：我已读完开场剧情，确认今晚我们都在同一个故事里。",
+      "读完后点击下一步，等所有玩家都确认后才会进入角色阅读。"
+    ],
+    role: [
+      "先安静读自己的角色卡。不要把隐藏秘密、任务、作案时间线念出来。",
+      "可以照着念：我已读完自己的角色信息，知道我的公开身份和本阶段可说范围。",
+      "读完后点下一步。所有人确认后，进入自我介绍。"
+    ],
+    intro: [
+      "按玩家顺序自我介绍。只说公开身份、你为什么在场、案发前公开可说的状态。",
+      `可以开头：大家好，我是${roleName}。今晚我来到这里，是因为……案发前我公开能说的是……`,
+      "不要主动爆隐藏秘密；被问到时再按角色卡的提示回答。"
+    ],
+    clue1: [
+      "先一起读公共线索。每个人可以说自己看到线索后的第一反应。",
+      `可以照着说：我是${roleName}，我觉得这条线索最重要的是……它让我开始怀疑……`,
+      "不要急着定凶手，先把时间线和每个人的动机摆出来。"
+    ],
+    discuss1: [
+      "这一轮自由讨论，重点问三件事：动机、时间、是否说谎。",
+      `${roleName}可以照着问：案发关键时间你在哪里？有没有人能证明？`,
+      "如果你被怀疑，先解释公开信息，再决定是否抛出一小部分隐藏信息自保。"
+    ],
+    act2: [
+      "阅读第二幕个人信息。这里通常会出现更深的秘密或反转。",
+      `可以照着说：我是${roleName}，第二幕后我能补充一点，但我不会一次说完。`,
+      "先想清楚哪些秘密必须保留，哪些可以用来交换信任。"
+    ],
+    investigate: [
+      "每人选择一个地点搜证。拿到线索后，先判断它保护你还是指向别人。",
+      `可以照着说：${roleName}搜到的线索我暂时可以公开一部分：它和……有关。`,
+      "搜证完成后点下一步，等所有人确认后进入集中发言。"
+    ],
+    speech2: [
+      "第二轮按顺序发言，要给出明确怀疑对象和理由。",
+      `可以照着说：我是${roleName}，我目前最怀疑……理由有三点：时间、动机、线索。`,
+      "如果你要自辩，记住：解释为什么你可疑，但不等于你杀人。"
+    ],
+    vote: [
+      "投票前每人最后一句自辩或指控。",
+      `可以照着说：我是${roleName}，我的最终判断是……如果我判断错，最大的漏洞可能是……`,
+      "投票后不能修改。所有人投完会自动进入真相复盘。"
+    ],
+    reveal: [
+      "复盘时先看投票结果，再读真相。",
+      "可以轮流说：我在哪个线索上被骗了？我最后为什么投给那个人？",
+      "这一阶段不用再隐藏秘密，可以把自己的完整故事讲出来。"
+    ]
+  };
+  return guides[room.phase.id] || ["按本阶段说明进行。"];
+}
+
+function phaseGuideView(room, me) {
+  return `
+    <section class="panel wide stage-guide">
+      <h2>本阶段新手台词</h2>
+      <ol>${phaseGuide(room, me).map((line) => `<li>${line}</li>`).join("")}</ol>
+    </section>
+  `;
+}
+
 function roomView() {
   const room = state.room;
   const me = state.me;
   const currentSpeaker = room.players[room.speakingIndex];
   const roleChoices = room.roles.map((role) => `<button data-vote="${role.id}" class="${me?.votedFor === role.id ? "selected" : ""}">${role.name}</button>`).join("");
   const locations = room.locations.map((location) => `<button data-investigate="${location.id}" ${me?.investigated?.length ? "disabled" : ""}>${location.name}</button>`).join("");
+  const readyCount = room.players.filter((player) => player.ready).length;
   const players = room.players.map((player) => `
     <li class="${currentSpeaker?.id === player.id ? "speaking" : ""}">
       <span>${player.order}. ${player.nickname}</span>
       <strong>${player.role ? player.role.name : "未分配"}</strong>
       ${player.isOwner ? "<em>房主</em>" : ""}
-      ${player.ready ? "<em>已完成</em>" : ""}
+      ${player.ready ? "<em>已点下一步</em>" : ""}
     </li>`).join("");
   return `
     <section class="topbar">
@@ -219,30 +294,31 @@ function roomView() {
         <p class="eyebrow">当前阶段</p>
         <h2>${room.phase.name}</h2>
         <p>${room.phase.instruction}</p>
+        ${canReady(room) ? `<p class="muted">下一步进度：${readyCount}/${room.players.length}</p>` : ""}
         ${room.phaseAudio ? "<audio class=\"phase-audio\" controls autoplay src=\"" + room.phaseAudio + "\"></audio>" : ""}
       </div>
       <div class="actions">
-        ${room.phaseIndex === 0 && me?.isOwner ? "<button data-action=\"start\">" + room.script.playerCount + "人到齐后开始</button>" : ""}
-        ${me?.isOwner && room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button data-action=\"advance\">进入下一阶段</button>" : ""}
-        ${room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button class=\"secondary\" data-action=\"ready\">我已完成本阶段</button>" : ""}
+        ${room.phase.id === "lobby" && me?.isOwner ? "<button data-action=\"start\">" + room.script.playerCount + "人到齐后开始剧情阅读</button>" : ""}
+        ${canReady(room) ? "<button class=\"secondary\" data-action=\"ready\">我已读完，下一步</button>" : ""}
         <button class="secondary" data-refresh>刷新状态</button>
       </div>
     </section>
-    ${room.phase.id === "lobby" && room.script.opening ? `
+    ${room.phase.id === "opening" && room.script.opening ? `
       <section class="panel wide">
         <h2>开场剧情</h2>
         <div class="private">${room.script.opening}</div>
-        <p class="muted">玩家到齐后，房主点击开始。也可以先把这段剧情读给群里听。</p>
+        <p class="muted">所有玩家读完后点击“我已读完，下一步”。人齐后自动进入角色阅读。</p>
       </section>` : ""}
+    ${phaseGuideView(room, me)}
     <section class="grid three">
       <article class="panel">
         <h2>我的角色</h2>
-        ${me?.role ? `
+        ${me?.role && room.phase.id !== "opening" ? `
           <p class="role-name">${me.role.name}</p>
           <p>${me.role.publicIdentity}</p>
           <p class="muted">${me.role.fit}</p>
           ${me.role.privateText ? "<div class=\"private\">" + me.role.privateText + "</div>" : ""}
-        ` : "<p class=\"muted\">等待开始后自动分配。</p>"}
+        ` : "<p class=\"muted\">当前先阅读公共剧情。下一阶段再查看角色卡。</p>"}
       </article>
       <article class="panel">
         <h2>玩家与顺序</h2>
@@ -253,7 +329,7 @@ function roomView() {
         <p class="speaker">${currentSpeaker ? currentSpeaker.nickname : "等待玩家"}</p>
         <p class="timer" data-timer>${formatTimer(state.timer)}</p>
         <button class="secondary" data-timer-start>开始 2 分钟</button>
-        ${me?.isOwner ? "<button class=\"secondary\" data-action=\"speech-next\">下一位发言</button>" : ""}
+        ${me?.isOwner && ["intro", "speech2"].includes(room.phase.id) ? "<button class=\"secondary\" data-action=\"speech-next\">下一位发言</button>" : ""}
       </article>
     </section>
     ${room.phase.id === "investigate" ? `
@@ -267,7 +343,7 @@ function roomView() {
       <section class="panel wide">
         <h2>最终投票</h2>
         <div class="button-grid">${roleChoices}</div>
-        <p class="muted">当前已投票：${room.voteProgress}/${room.players.length}</p>
+        <p class="muted">当前已投票：${room.voteProgress}/${room.players.length}。全员投完后自动进入复盘。</p>
       </section>` : ""}
     ${room.phase.id === "reveal" ? revealView(room) : ""}
   `;
