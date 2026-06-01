@@ -897,6 +897,11 @@ function publicRole(script: ScriptPack, roleId: string) {
 
 function privateTextForPhase(roleItem: Role, phaseId: string) {
   if (roleItem.privateByPhase[phaseId]) return roleItem.privateByPhase[phaseId];
+  if (phaseId === "role" && roleItem.privateByPhase.role) return roleItem.privateByPhase.role;
+  if (phaseId === "investigate" && roleItem.privateByPhase.act2) return roleItem.privateByPhase.act2;
+  if (phaseId === "discuss1" && roleItem.privateByPhase.clue1) return roleItem.privateByPhase.clue1;
+  if (phaseId === "speech2" && roleItem.privateByPhase.act2) return roleItem.privateByPhase.act2;
+  if (phaseId === "vote" && roleItem.privateByPhase.speech2) return roleItem.privateByPhase.speech2;
   if (phaseId === "intro") {
     return `自我介绍参考：我是${roleItem.name}，${roleItem.publicIdentity}。请只介绍公开身份、来到现场的理由、案发前自己的公开状态。隐藏秘密先不要说。`;
   }

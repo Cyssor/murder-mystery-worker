@@ -265,6 +265,19 @@ function phaseGuideView(room, me) {
   `;
 }
 
+function privateStageView(room, me) {
+  if (!me?.role || room.phase.id === "opening") return "";
+  const text = me.role.privateText || "本阶段没有新的私密信息。你可以继续参考上一阶段角色卡和本阶段新手台词发言。";
+  return `
+    <section class="panel wide">
+      <h2>本阶段个人信息</h2>
+      <p class="role-name">${me.role.name}</p>
+      <p class="muted">${room.phase.name} · 只给你自己看</p>
+      <div class="private">${text}</div>
+    </section>
+  `;
+}
+
 function roomView() {
   const room = state.room;
   const me = state.me;
@@ -310,14 +323,14 @@ function roomView() {
         <p class="muted">所有玩家读完后点击“我已读完，下一步”。人齐后自动进入角色阅读。</p>
       </section>` : ""}
     ${phaseGuideView(room, me)}
+    ${privateStageView(room, me)}
     <section class="grid three">
       <article class="panel">
-        <h2>我的角色</h2>
+        <h2>我的公开身份</h2>
         ${me?.role && room.phase.id !== "opening" ? `
           <p class="role-name">${me.role.name}</p>
           <p>${me.role.publicIdentity}</p>
           <p class="muted">${me.role.fit}</p>
-          ${me.role.privateText ? "<div class=\"private\">" + me.role.privateText + "</div>" : ""}
         ` : "<p class=\"muted\">当前先阅读公共剧情。下一阶段再查看角色卡。</p>"}
       </article>
       <article class="panel">
