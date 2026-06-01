@@ -1,0 +1,13 @@
+{
+  "name": "murder-mystery-pages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"console.log(\\\"Cloudflare Pages static build\\\")\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "latest"
+  }
+}
