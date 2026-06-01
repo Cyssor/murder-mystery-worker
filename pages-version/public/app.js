@@ -154,9 +154,9 @@ function scriptCounts(script) {
 function homeView() {
   const counts = [...new Set(state.scripts.flatMap((script) => scriptCounts(script)).map(String))].sort((a, b) => Number(a) - Number(b));
   if (!counts.includes(state.selectedCount)) state.selectedCount = counts[0] || "7";
-  const countOptions = counts.map((count) => "<option value=\\"" + count + "\\" " + (state.selectedCount === count ? "selected" : "") + ">" + count + "人</option>").join("");
+  const countOptions = counts.map((count) => "<option value=\"" + count + "\" " + (state.selectedCount === count ? "selected" : "") + ">" + count + "人</option>").join("");
   const filteredScripts = state.scripts.filter((script) => scriptCounts(script).map(String).includes(state.selectedCount));
-  const scriptOptions = filteredScripts.map((script) => "<option value=\\"" + script.id + "\\">" + script.title + " · " + (script.difficulty || "") + " · " + script.duration + "</option>").join("");
+  const scriptOptions = filteredScripts.map((script) => "<option value=\"" + script.id + "\">" + script.title + " · " + (script.difficulty || "") + " · " + script.duration + "</option>").join("");
   return `
     <section class="topbar">
       <div>
@@ -165,7 +165,7 @@ function homeView() {
       </div>
       <span class="pill">Cloudflare Workers 原型</span>
     </section>
-    ${state.error ? "<p class=\\"error\\">" + state.error + "</p>" : ""}
+    ${state.error ? "<p class=\"error\">" + state.error + "</p>" : ""}
     <section class="grid two">
       <form class="panel" data-create>
         <h2>创建房间</h2>
@@ -213,18 +213,18 @@ function roomView() {
       </div>
       <button class="ghost" data-reset>退出本机身份</button>
     </section>
-    ${state.error ? "<p class=\\"error\\">" + state.error + "</p>" : ""}
+    ${state.error ? "<p class=\"error\">" + state.error + "</p>" : ""}
     <section class="phase">
       <div>
         <p class="eyebrow">当前阶段</p>
         <h2>${room.phase.name}</h2>
         <p>${room.phase.instruction}</p>
-        ${room.phaseAudio ? "<audio class=\\"phase-audio\\" controls autoplay src=\\"" + room.phaseAudio + "\\"></audio>" : ""}
+        ${room.phaseAudio ? "<audio class=\"phase-audio\" controls autoplay src=\"" + room.phaseAudio + "\"></audio>" : ""}
       </div>
       <div class="actions">
-        ${room.phaseIndex === 0 && me?.isOwner ? "<button data-action=\\"start\\">" + room.script.playerCount + "人到齐后开始</button>" : ""}
-        ${me?.isOwner && room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button data-action=\\"advance\\">进入下一阶段</button>" : ""}
-        ${room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button class=\\"secondary\\" data-action=\\"ready\\">我已完成本阶段</button>" : ""}
+        ${room.phaseIndex === 0 && me?.isOwner ? "<button data-action=\"start\">" + room.script.playerCount + "人到齐后开始</button>" : ""}
+        ${me?.isOwner && room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button data-action=\"advance\">进入下一阶段</button>" : ""}
+        ${room.phaseIndex > 0 && room.phaseIndex < 9 ? "<button class=\"secondary\" data-action=\"ready\">我已完成本阶段</button>" : ""}
         <button class="secondary" data-refresh>刷新状态</button>
       </div>
     </section>
@@ -241,8 +241,8 @@ function roomView() {
           <p class="role-name">${me.role.name}</p>
           <p>${me.role.publicIdentity}</p>
           <p class="muted">${me.role.fit}</p>
-          ${me.role.privateText ? "<div class=\\"private\\">" + me.role.privateText + "</div>" : ""}
-        ` : "<p class=\\"muted\\">等待开始后自动分配。</p>"}
+          ${me.role.privateText ? "<div class=\"private\">" + me.role.privateText + "</div>" : ""}
+        ` : "<p class=\"muted\">等待开始后自动分配。</p>"}
       </article>
       <article class="panel">
         <h2>玩家与顺序</h2>
@@ -253,7 +253,7 @@ function roomView() {
         <p class="speaker">${currentSpeaker ? currentSpeaker.nickname : "等待玩家"}</p>
         <p class="timer" data-timer>${formatTimer(state.timer)}</p>
         <button class="secondary" data-timer-start>开始 2 分钟</button>
-        ${me?.isOwner ? "<button class=\\"secondary\\" data-action=\\"speech-next\\">下一位发言</button>" : ""}
+        ${me?.isOwner ? "<button class=\"secondary\" data-action=\"speech-next\">下一位发言</button>" : ""}
       </article>
     </section>
     ${room.phase.id === "investigate" ? `
